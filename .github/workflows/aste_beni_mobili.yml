@@ -1,0 +1,43 @@
+name: Aste Beni Mobili MO-BO-RE
+
+on:
+  schedule:
+    # Ogni lunedi alle 07:00 UTC (09:00 ora italiana in estate). Modifica a piacere: https://crontab.guru
+    - cron: "0 7 * * 1"
+  workflow_dispatch: {}   # permette di lanciarlo manualmente da GitHub -> Actions -> Run workflow
+
+jobs:
+  run-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Installa dipendenze
+        run: |
+          pip install -r requirements.txt
+          playwright install --with-deps chromium
+
+      - name: Scrivi credenziali Google Drive
+        run: |
+          echo "${{ secrets.GDRIVE_SA_KEY_B64 }}" | base64 -d > /tmp/gdrive_sa.json
+
+      - name: Esegui lo scraper e carica su Drive
+        env:
+          GDRIVE_CREDENTIALS_FILE: /tmp/gdrive_sa.json
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: |
+          python scripts/aste_scraper.py
+
+      - name: Carica il file anche come artifact della run (backup)
+        uses: actions/upload-artifact@v4
+        with:
+          name: report-aste-beni-mobili
+          path: output/*.xlsx
+          retention-days: 90
