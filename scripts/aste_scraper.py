@@ -85,10 +85,10 @@ def get_live_tokens():
     """
     captured = {}
 
-    def handle_request(request):
-        if "typesense.astagiudiziaria.com" in request.url and "x-typesense-api-key=" in request.url:
-            m = re.search(r"x-typesense-api-key=([^&]+)", request.url)
-            if m and "typesense_key" not in captured:
+    def handle_response(response):
+        if "typesense.astagiudiziaria.com" in response.url and "x-typesense-api-key=" in response.url and response.status == 200:
+            m = re.search(r"x-typesense-api-key=([^&]+)", response.url)
+            if m:
                 captured["typesense_key"] = m.group(1)
 
     with sync_playwright() as p:
@@ -97,7 +97,7 @@ def get_live_tokens():
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
             "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
         ))
-        page.on("request", handle_request)
+        page.on("response", handle_response)
         page.goto(ENTRY_URL, wait_until="networkidle", timeout=45000)
         # forza un secondo giro di ricerca se la prima richiesta non e' stata catturata
         if "typesense_key" not in captured:
