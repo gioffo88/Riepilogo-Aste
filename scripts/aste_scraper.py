@@ -64,6 +64,15 @@ REPORT_PREFIX = "Report_Aste_Beni_Mobili_MO_BO_RE"
 
 FONT = "Arial"
 
+BROWSER_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    ),
+    "Referer": ENTRY_URL,
+    "Origin": ENTRY_URL.rstrip("/"),
+}
+
 
 # --------------------------------------------------------------------------------------
 # STEP 1 - Cattura chiave Typesense + token API tramite un browser headless
@@ -128,7 +137,7 @@ def search_lots(typesense_key):
         "q": "*",
         "filter_by": FILTER_BY,
     }
-    r = requests.get(url, params=params, timeout=30)
+    r = requests.get(url, params=params, headers=BROWSER_HEADERS, timeout=30)
     r.raise_for_status()
     data = r.json()
     return [h["document"] for h in data.get("hits", [])]
@@ -136,7 +145,7 @@ def search_lots(typesense_key):
 
 def get_storico(asta_token, lot_id):
     url = f"{CORE_API_HOST}/api/v1/front/inserzioni/storico-inserzione/{lot_id}"
-    headers = {"Authorization": f"Bearer {asta_token}"}
+    headers = {**BROWSER_HEADERS, "Authorization": f"Bearer {asta_token}"}
     r = requests.get(url, headers=headers, timeout=20)
     if not r.ok:
         return []
