@@ -129,7 +129,6 @@ def get_live_tokens():
 def search_lots(typesense_key):
     url = f"{TYPESENSE_HOST}/collections/{TYPESENSE_COLLECTION}/documents/search"
     params = {
-        "x-typesense-api-key": typesense_key,
         "query_by": "ivg_short_name,province,numero_procedura,category,subcategory,"
                     "title,inserzioneEspVendita,tags,city",
         "per_page": 250,
@@ -137,7 +136,8 @@ def search_lots(typesense_key):
         "q": "*",
         "filter_by": FILTER_BY,
     }
-    r = requests.get(url, params=params, headers=BROWSER_HEADERS, timeout=30)
+    headers = {**BROWSER_HEADERS, "X-TYPESENSE-API-KEY": typesense_key}
+    r = requests.get(url, params=params, headers=headers, timeout=30)
     r.raise_for_status()
     data = r.json()
     return [h["document"] for h in data.get("hits", [])]
